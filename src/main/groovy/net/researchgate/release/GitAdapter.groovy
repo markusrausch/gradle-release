@@ -35,7 +35,7 @@ class GitAdapter extends BaseScmAdapter {
         def pushOptions = []
         boolean signTag = false
 
-        /** @deprecated Remove in version 3.0   */
+        /** @deprecated Remove in version 3.0    */
         @Deprecated
         boolean pushToCurrentBranch = false
         String pushToBranchPrefix
@@ -101,8 +101,7 @@ class GitAdapter extends BaseScmAdapter {
 
     @Override
     void checkUpdateNeeded() {
-        boolean isOffline = findProperty('offline', 'false')
-        if (!isOffline) {
+        if (!offlineMode()) {
             exec(['git', 'remote', 'update'], directory: workingDirectory, errorPatterns: ['error: ', 'fatal: '])
 
             def status = gitRemoteStatus()
@@ -180,10 +179,10 @@ class GitAdapter extends BaseScmAdapter {
     private boolean shouldPush() {
         def shouldPush = false
 
-        def isOffline = findProperty('offline', 'false')
-        if (isOffline) {
+        if (offlineMode()) {
             return false
         }
+
         if (extension.git.pushToRemote) {
             exec(['git', 'remote'], directory: workingDirectory).eachLine { line ->
                 Matcher matcher = line =~ ~/^\s*(.*)\s*$/
@@ -195,6 +194,7 @@ class GitAdapter extends BaseScmAdapter {
                 throw new GradleException("Could not push to remote ${extension.git.pushToRemote} as repository has no such remote")
             }
         }
+
         shouldPush
     }
 

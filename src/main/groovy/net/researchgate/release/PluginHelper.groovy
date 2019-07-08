@@ -37,12 +37,16 @@ class PluginHelper {
      * The logger is taken from the {@link Project} instance if it's initialized already
      * or from SLF4J {@link LoggerFactory} if it's not.
      *
-     * @return SLF4J {@link Logger} instance
+     * @return SLF4J{@link Logger} instance
      */
     Logger getLog() { project?.logger ?: LoggerFactory.getLogger(this.class) }
 
     boolean useAutomaticVersion() {
         findProperty('release.useAutomaticVersion', null, 'gradle.release.useAutomaticVersion') == 'true'
+    }
+
+    boolean offlineMode() {
+        findProperty('release.offline', null, null) == 'true'
     }
 
     /**
@@ -52,10 +56,8 @@ class PluginHelper {
      * @param commands commands to execute
      * @return command "stdout" output
      */
-    String exec(
-        Map options = [:],
-        List<String> commands
-    ) {
+    String exec(Map options = [:],
+                List<String> commands) {
         initExecutor()
         options['directory'] = options['directory'] ?: project.rootDir
         executor.exec(options, commands)
@@ -122,8 +124,8 @@ class PluginHelper {
         if (extension.tagTemplate) {
             def engine = new SimpleTemplateEngine()
             def binding = [
-                "version": project.version,
-                "name"   : project.name
+                    "version": project.version,
+                    "name"   : project.name
             ]
             tagName = engine.createTemplate(extension.tagTemplate).make(binding).toString()
         } else {
