@@ -171,7 +171,10 @@ class ReleasePlugin extends PluginHelper implements Plugin<Project> {
     }
 
     void checkUpdateNeeded() {
-        scmAdapter.checkUpdateNeeded()
+        boolean isOffline = findProperty('offline', false, null)
+        if (!isOffline) {
+            scmAdapter.checkUpdateNeeded()
+        }
     }
 
     void checkoutAndMergeToReleaseBranch() {

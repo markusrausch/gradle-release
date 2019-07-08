@@ -1,0 +1,43 @@
+allprojects {
+    ext {
+
+        def versions = [
+                groovy : '2.5.5',
+                junit  : '4.12',
+                assertj: '3.11.0',
+                grgit  : '3.0.0',
+                release: '2.6.0'
+        ]
+
+        def libs = [
+                groovy : [group: 'org.codehaus.groovy', name: 'groovy-all', version: versions.groovy],
+                junit  : [group: 'junit', name: 'junit', version: versions.junit],
+                assertj: [group: 'org.assertj', name: 'assertj-core', version: versions.assertj],
+                grgit  : [group: 'org.ajoberstar.grgit', name: 'grgit-core', version: versions.grgit],
+                release: [group: 'net.researchgate', name: 'gradle-release', version: versions.release]
+        ]
+
+        libraries = libs.collectEntries { key, value ->
+            [(key): { return "${value.get('group')}:${value.get('name')}:${value.get('version')}" }]
+        }
+
+        def artifactRepositoryOfUrl = { String url ->
+            { MavenArtifactRepository repository ->
+                repository.setUrl(url)
+                repository.credentials(HttpHeaderCredentials, { HttpHeaderCredentials credentials ->
+                    credentials.name = credentials_name
+                    credentials.value = credentials_value
+                })
+                repository.authentication({ AuthenticationContainer authentications ->
+                    authentications.register("header", HttpHeaderAuthentication)
+                })
+            }
+        }
+
+        artifactRepository = {
+            return artifactRepositoryOfUrl(artifactRepoUrl)
+        }
+
+    }
+
+}

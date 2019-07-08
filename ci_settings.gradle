@@ -1,0 +1,7 @@
+allprojects {
+    ext {
+        artifactRepoUrl = "https://gitlab.com/api/v4/projects/8818132/packages/maven"
+        credentials_name = "Job-Token"
+        credentials_value = "CREDENTIALS_VALUE"
+    }
+}

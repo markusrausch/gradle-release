@@ -35,7 +35,7 @@ class GitAdapter extends BaseScmAdapter {
         def pushOptions = []
         boolean signTag = false
 
-        /** @deprecated Remove in version 3.0 */
+        /** @deprecated Remove in version 3.0   */
         @Deprecated
         boolean pushToCurrentBranch = false
         String pushToBranchPrefix
@@ -62,7 +62,7 @@ class GitAdapter extends BaseScmAdapter {
     @Override
     boolean isSupported(File directory) {
         if (!directory.list().grep('.git')) {
-            return directory.parentFile? isSupported(directory.parentFile) : false
+            return directory.parentFile ? isSupported(directory.parentFile) : false
         }
 
         workingDirectory = directory
@@ -79,7 +79,7 @@ class GitAdapter extends BaseScmAdapter {
         }
         if (extension.git.requireBranch) {
             if (!(workingBranch ==~ extension.git.requireBranch)) {
-                throw new GradleException("Current Git branch is \"$workingBranch\" and not \"${ extension.git.requireBranch }\".")
+                throw new GradleException("Current Git branch is \"$workingBranch\" and not \"${extension.git.requireBranch}\".")
             }
         }
     }
@@ -90,27 +90,30 @@ class GitAdapter extends BaseScmAdapter {
 
         if (status[UNVERSIONED]) {
             warnOrThrow(extension.failOnUnversionedFiles,
-                    (['You have unversioned files:', LINE, * status[UNVERSIONED], LINE] as String[]).join('\n'))
+                    (['You have unversioned files:', LINE, *status[UNVERSIONED], LINE] as String[]).join('\n'))
         }
 
         if (status[UNCOMMITTED]) {
             warnOrThrow(extension.failOnCommitNeeded,
-                    (['You have uncommitted files:', LINE, * status[UNCOMMITTED], LINE] as String[]).join('\n'))
+                    (['You have uncommitted files:', LINE, *status[UNCOMMITTED], LINE] as String[]).join('\n'))
         }
     }
 
     @Override
     void checkUpdateNeeded() {
-        exec(['git', 'remote', 'update'], directory: workingDirectory, errorPatterns: ['error: ', 'fatal: '])
+        boolean isOffline = findProperty('offline', 'false')
+        if (!isOffline) {
+            exec(['git', 'remote', 'update'], directory: workingDirectory, errorPatterns: ['error: ', 'fatal: '])
 
-        def status = gitRemoteStatus()
+            def status = gitRemoteStatus()
 
-        if (status[AHEAD]) {
-            warnOrThrow(extension.failOnPublishNeeded, "You have ${status[AHEAD]} local change(s) to push.")
-        }
+            if (status[AHEAD]) {
+                warnOrThrow(extension.failOnPublishNeeded, "You have ${status[AHEAD]} local change(s) to push.")
+            }
 
-        if (status[BEHIND]) {
-            warnOrThrow(extension.failOnUpdateNeeded, "You have ${status[BEHIND]} remote change(s) to pull.")
+            if (status[BEHIND]) {
+                warnOrThrow(extension.failOnUpdateNeeded, "You have ${status[BEHIND]} remote change(s) to pull.")
+            }
         }
     }
 
@@ -176,6 +179,11 @@ class GitAdapter extends BaseScmAdapter {
 
     private boolean shouldPush() {
         def shouldPush = false
+
+        def isOffline = findProperty('offline', 'false')
+        if (isOffline) {
+            return false
+        }
         if (extension.git.pushToRemote) {
             exec(['git', 'remote'], directory: workingDirectory).eachLine { line ->
                 Matcher matcher = line =~ ~/^\s*(.*)\s*$/
@@ -187,7 +195,6 @@ class GitAdapter extends BaseScmAdapter {
                 throw new GradleException("Could not push to remote ${extension.git.pushToRemote} as repository has no such remote")
             }
         }
-
         shouldPush
     }
 
@@ -223,6 +230,6 @@ class GitAdapter extends BaseScmAdapter {
         if (behindMatcher.matches()) {
             remoteStatus[BEHIND] = behindMatcher[0][1]
         }
-        remoteStatus
+        remoteStatus as Map<String, Integer>
     }
 }
