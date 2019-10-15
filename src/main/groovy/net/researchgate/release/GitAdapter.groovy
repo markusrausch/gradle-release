@@ -13,6 +13,7 @@ package net.researchgate.release
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 
+import java.nio.file.Paths
 import java.util.regex.Matcher
 
 class GitAdapter extends BaseScmAdapter {
@@ -101,7 +102,7 @@ class GitAdapter extends BaseScmAdapter {
 
     @Override
     void checkUpdateNeeded() {
-        if (!offlineMode()) {
+        if (isOnline()) {
             exec(['git', 'remote', 'update'], directory: workingDirectory, errorPatterns: ['error: ', 'fatal: '])
 
             def status = gitRemoteStatus()
@@ -179,23 +180,29 @@ class GitAdapter extends BaseScmAdapter {
     private boolean shouldPush() {
         def shouldPush = false
 
-        if (offlineMode()) {
-            return false
-        }
-
-        if (extension.git.pushToRemote) {
-            exec(['git', 'remote'], directory: workingDirectory).eachLine { line ->
-                Matcher matcher = line =~ ~/^\s*(.*)\s*$/
-                if (matcher.matches() && matcher.group(1) == extension.git.pushToRemote) {
-                    shouldPush = true
+        if (isOnline()) {
+            if (extension.git.pushToRemote) {
+                exec(['git', 'remote'], directory: workingDirectory).eachLine { line ->
+                    Matcher matcher = line =~ ~/^\s*(.*)\s*$/
+                    if (matcher.matches() && matcher.group(1) == extension.git.pushToRemote) {
+                        shouldPush = true
+                    }
+                }
+                if (!shouldPush && extension.git.pushToRemote != 'origin') {
+                    throw new GradleException("Could not push to remote ${extension.git.pushToRemote} as repository has no such remote")
                 }
             }
-            if (!shouldPush && extension.git.pushToRemote != 'origin') {
-                throw new GradleException("Could not push to remote ${extension.git.pushToRemote} as repository has no such remote")
-            }
         }
-
         shouldPush
+    }
+
+    private boolean isOnline() {
+        def commands = ['git', 'ls-remote']
+        Process process = commands.execute([], workingDirectory)
+        if (process.exitValue() > 0) {
+            return false
+        }
+        return true
     }
 
     private String gitCurrentBranch() {

@@ -42,12 +42,13 @@ class PluginHelper {
     Logger getLog() { project?.logger ?: LoggerFactory.getLogger(this.class) }
 
     boolean useAutomaticVersion() {
-        findProperty('release.useAutomaticVersion', null, 'gradle.release.useAutomaticVersion') == 'true'
+        return true
+        //findProperty('release.useAutomaticVersion', null, 'gradle.release.useAutomaticVersion') == 'true'
     }
 
-    boolean offlineMode() {
+    /*boolean offlineMode() {
         findProperty('release.offline', null, null) == 'true'
-    }
+    }*/
 
     /**
      * Executes command specified and retrieves its "stdout" output.
